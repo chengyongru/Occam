@@ -25,6 +25,7 @@ class Settings:
     llm_timeout: float = 120.0
     llm_temperature: float = 0.7
     llm_max_retries: int = 2
+    llm_max_tokens: int = 32768
     
     # Notion configuration
     notion_token: str
@@ -61,6 +62,7 @@ class Settings:
         self.llm_timeout = float(os.getenv('LLM_TIMEOUT', '120.0'))
         self.llm_temperature = float(os.getenv('LLM_TEMPERATURE', '0.7'))
         self.llm_max_retries = int(os.getenv('LLM_MAX_RETRIES', '2'))
+        self.llm_max_tokens = int(os.getenv('LLM_MAX_TOKENS', '32768'))
         
         # Normalize base_url - ensure it ends with /v1
         # According to CloseAI docs, base_url must include /v1 suffix

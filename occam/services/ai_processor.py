@@ -106,6 +106,7 @@ class AIProcessorService:
                 ],
                 temperature=self.settings.llm_temperature,
                 max_retries=self.settings.llm_max_retries,
+                max_tokens=self.settings.llm_max_tokens,
             )
             
             logger.info(f"Successfully extracted knowledge entry: {knowledge_entry.title}")
@@ -129,6 +130,14 @@ class AIProcessorService:
                 raise Exception(f"API 认证失败 (401): 请检查 API_KEY 是否正确")
             elif "timeout" in error_msg.lower():
                 raise Exception(f"API 请求超时: 请检查网络连接或增加超时时间")
+            elif "max_tokens" in error_msg.lower() or "length limit" in error_msg.lower() or "incomplete" in error_msg.lower():
+                error_hint = (
+                    f"\n可能的原因：\n"
+                    f"1. 输出内容过长，超过了 max_tokens 限制（当前: {self.settings.llm_max_tokens}）\n"
+                    f"2. 文章内容太长，导致生成的 page_content 字段超过限制\n"
+                    f"3. 解决方案：增加 LLM_MAX_TOKENS 环境变量值（例如: 65536）"
+                )
+                raise Exception(f"输出长度超限: {error_msg}{error_hint}")
             else:
                 raise Exception(f"AI 处理失败: {error_msg}")
     

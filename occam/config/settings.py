@@ -39,6 +39,9 @@ class Settings:
     notion_property_tags: str = "Tags"
     notion_property_score: str = "Score"
     notion_property_url: str = "URL"
+
+    # Scraper proxy configuration (only affects web scraping, not other APIs)
+    scraper_proxy: Optional[str] = None
     
     def __init__(self):
         """Load settings from environment variables"""
@@ -81,6 +84,9 @@ class Settings:
         self.notion_property_tags = os.getenv('NOTION_PROPERTY_TAGS', 'Tags')
         self.notion_property_score = os.getenv('NOTION_PROPERTY_SCORE', 'Score')
         self.notion_property_url = os.getenv('NOTION_PROPERTY_URL', 'URL')
+
+        # Scraper proxy (only affects web scraping, not Notion/Feishu/LLM APIs)
+        self.scraper_proxy = os.getenv('SCRAPER_PROXY', None)
         
         # Validate required settings
         self._validate()

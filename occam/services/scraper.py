@@ -102,16 +102,17 @@ class ScraperService:
     
     def _get_proxy_config(self) -> Optional[dict]:
         """
-        Get proxy configuration from environment variable
-        
+        Get proxy configuration from settings (only affects web scraping)
+
         Returns:
             Proxy configuration dict for Playwright, or None if not configured
         """
-        proxy_url = os.getenv('ALL_PROXY') or os.getenv('all_proxy')
+        # Use SCRAPER_PROXY setting from config (not ALL_PROXY to avoid affecting other APIs)
+        proxy_url = self.settings.scraper_proxy
         if not proxy_url:
             return None
-        
-        logger.info(f"Using proxy: {proxy_url}")
+
+        logger.info(f"Using proxy for web scraping: {proxy_url}")
         return {"server": proxy_url}
     
     def _get_domain_from_url(self, url: str) -> str:
@@ -384,17 +385,19 @@ class ScraperService:
     
     def _extract_with_fallback(self, page, url: str) -> str:
         """
-        Extract content with multi-level fallback strategy
-        
+        Extract content with fallback strategy
+
         Priority:
-        1. AI semantic extraction
-        2. Trafilatura extraction
-        3. Body conversion (fallback)
-        
+        1. Trafilatura extraction (fast and reliable)
+        2. Body conversion with markdownify (fallback)
+
+        Note: AI semantic extraction removed to avoid redundant LLM calls.
+         The actual AI processing for knowledge extraction happens in message_processor.
+
         Args:
             page: Playwright page object
             url: URL being fetched
-        
+
         Returns:
             Markdown formatted content string
         """
@@ -402,22 +405,16 @@ class ScraperService:
         body = page.query_selector("body")
         if not body:
             raise Exception("Could not extract content from page: body not found")
-        
+
         raw_html = body.inner_html()
-        
-        # Try AI extraction first (pass raw HTML and URL for trafilatura preprocessing)
-        markdown = self._extract_with_llm(raw_html, url)
-        if markdown and len(markdown) > 100:
-            logger.info("Using AI-extracted content")
-            return markdown
-        
-        # Fallback to trafilatura (markdown format)
+
+        # Try trafilatura extraction first (fast and reliable)
         markdown = self._extract_with_trafilatura(raw_html, url)
         if markdown and len(markdown) > 100:
             logger.info("Using trafilatura-extracted content")
             return markdown
-        
-        # Final fallback: preprocess and convert body to markdown
+
+        # Fallback: preprocess and convert body to markdown
         logger.warning("Using body fallback conversion")
         cleaned_html = self._preprocess_html(raw_html)
         markdown = md(
@@ -426,10 +423,10 @@ class ScraperService:
             bullets="-",
             strip=['script', 'style', 'nav', 'header', 'footer', 'aside', 'advertisement', 'button']
         )
-        
+
         if not markdown or len(markdown) < 50:
             raise Exception("All extraction methods failed or returned insufficient content")
-        
+
         return markdown
     
     def _fetch_with_playwright(self, url: str) -> str:

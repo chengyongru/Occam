@@ -64,6 +64,15 @@ LLM_MAX_RETRIES=2 (可选，最大重试次数，默认 2)
 - CloseAI 代理（DeepSeek）：`BASE_URL=https://api.openai-proxy.org/v1` → 实际调用 `https://api.openai-proxy.org/v1/chat/completions`
 - 标准 OpenAI API：`BASE_URL=https://api.openai.com/v1` → 实际调用 `https://api.openai.com/v1/chat/completions`
 
+#### 代理配置（可选）
+```
+SCRAPER_PROXY=http://127.0.0.1:7890
+```
+**重要说明：**
+- `SCRAPER_PROXY` 仅对网页抓取生效，不会影响 Notion API、Feishu API 或 LLM API
+- 支持的代理格式：`http://host:port`、`https://host:port`、`socks5://host:port`
+- 如果不需要代理，请不要设置此变量
+
 #### Notion 配置（必需）
 ```
 NOTION_TOKEN=your_notion_integration_token
